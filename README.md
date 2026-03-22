@@ -26,7 +26,7 @@ Una aplicación web moderna y responsive para consultar los precios de combustib
   <img src="img/captura1.png" width="600">
 </p>
 <p align="center">
-  <img src="img/captura.png" width="600">
+  <img src="img/captura2.png" width="600">
 </p>
 
 ## 📋 Requisitos
