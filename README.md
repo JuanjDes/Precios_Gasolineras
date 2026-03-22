@@ -20,9 +20,14 @@ Una aplicación web moderna y responsive para consultar los precios de combustib
 
 ## 🚀 Demo
 
-![Vista previa de la aplicación](https://via.placeholder.com/800x400/0078d7/ffffff?text=Precios+Gasolineras+Demo)
+![Vista previa de la aplicación](https://juanjdes.github.io/Precios_Gasolineras/)
 
-*[Captura de pantalla de la aplicación en funcionamiento]*
+<p align="center">
+  <img src="img/captura1.png" width="600">
+</p>
+<p align="center">
+  <img src="img/captura.png" width="600">
+</p>
 
 ## 📋 Requisitos
 
