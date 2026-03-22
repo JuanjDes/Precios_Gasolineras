@@ -35,30 +35,6 @@ Una aplicación web moderna y responsive para consultar los precios de combustib
 - Conexión a internet para datos en tiempo real
 - Geolocalización opcional (para ubicación automática)
 
-## 🛠️ Instalación
-
-### Opción 1: Ejecutar localmente (Recomendado)
-
-```bash
-# Clona el repositorio
-git clone https://github.com/tu-usuario/precios-gasolineras.git
-cd precios-gasolineras/app
-
-# Instala http-server globalmente (si no lo tienes)
-npm install -g http-server
-
-# Ejecuta el servidor
-http-server -p 8080 -c-1 --cors
-
-# Abre en tu navegador: http://localhost:8080
-```
-
-### Opción 2: Abrir directamente en navegador
-
-```bash
-# Simplemente abre index.html en tu navegador
-# Nota: Algunos navegadores bloquean CORS para archivos locales
-```
 
 ## 📖 Uso
 
@@ -150,7 +126,6 @@ GET https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarb
 ## 📞 Contacto
 
 - **Autor**: Juan José Guapo R.
-- **Email**: tu.email@ejemplo.com
 - **GitHub**: [@JuanjDes](https://github.com/JuanjDes)
 - **LinkedIn**: [juanj-guapo](https://es.linkedin.com/in/juanj-guapo)
 
