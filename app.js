@@ -81,12 +81,22 @@ useLocationBtn.addEventListener('click', () => {
 
     setLocationStatus('Obteniendo ubicación…');
     navigator.geolocation.getCurrentPosition(
-        (pos) => {
+        async (pos) => {
             userLocation = {
                 lat: pos.coords.latitude,
                 lng: pos.coords.longitude
             };
-            setLocationStatus(`Ubicación activa: ${userLocation.lat.toFixed(5)}, ${userLocation.lng.toFixed(5)}`, 'activado');
+
+            // Primero intentar reverse geocoding para obtener ciudad
+            const placeName = await reverseGeocode(userLocation.lat, userLocation.lng);
+            if (placeName) {
+                setLocationStatus(`Ubicación activa: ${placeName}`, 'activado');
+            } else {
+                // Fallback a coordenadas si no hay ciudad
+                const coordsText = `${userLocation.lat.toFixed(5)}, ${userLocation.lng.toFixed(5)}`;
+                setLocationStatus(`Ubicación activa: ${coordsText}`, 'activado');
+            }
+
             if (currentStations.length > 0) {
                 updateDistanceForStations();
                 sortAndDisplay(getActiveSortType());
@@ -437,6 +447,34 @@ async function geocodeCity(city) {
         return result;
     } catch (error) {
         console.warn('Error en geocoding:', error);
+        return null;
+    }
+}
+
+async function reverseGeocode(lat, lng) {
+    if (typeof lat !== 'number' || typeof lng !== 'number') return null;
+    const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1`;
+    try {
+        const response = await fetch(url, {
+            headers: {
+                'Accept-Language': 'es',
+                'User-Agent': 'PreciosGasolineras/1.0 (https://example.com)'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`Reverse geocoding HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        const addr = data.address || {};
+        const place = addr.city || addr.town || addr.village || addr.suburb || addr.hamlet || addr.county || addr.state;
+        if (place) {
+            return place;
+        }
+        return data.display_name || null;
+    } catch (error) {
+        console.warn('Error en reverseGeocode:', error);
         return null;
     }
 }
