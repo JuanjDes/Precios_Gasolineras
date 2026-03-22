@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Precios de Gasolineras - España</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⛽ Precios de Gasolineras</h1>
+            <p class="subtitle">Consulta los precios en tiempo real en España</p>
+        </header>
+
+        <main>
+            <div class="search-section">
+                <div class="search-input-group">
+                    <label for="city-input">Buscar por ciudad:</label>
+                    <div class="input-wrapper">
+                        <input 
+                            type="text" 
+                            id="city-input" 
+                            placeholder="Ej: Madrid, Barcelona, Valencia..."
+                            aria-label="Ingrese el nombre de la ciudad"
+                        >
+                        <button id="search-btn" class="btn-primary">🔍 Buscar</button>
+                    </div>
+                </div>
+
+                <div class="suggestions">
+                    <p class="suggestions-label">Ciudades populares:</p>
+                    <div class="city-buttons">
+                        <button class="city-btn" data-city="Madrid">Madrid</button>
+                        <button class="city-btn" data-city="Barcelona">Barcelona</button>
+                        <button class="city-btn" data-city="Valencia">Valencia</button>
+                        <button class="city-btn" data-city="Sevilla">Sevilla</button>
+                        <button class="city-btn" data-city="Bilbao">Bilbao</button>
+                        <button class="city-btn" data-city="Málaga">Málaga</button>
+                    </div>
+                </div>
+
+                <div class="extra-filters">
+                    <label for="fuel-select">Combustible:</label>
+                    <select id="fuel-select" class="fuel-select" aria-label="Seleccionar tipo de combustible">
+                        <option value="gasolina95">Gasolina 95 (E5)</option>
+                        <option value="gasolina98">Gasolina 98</option>
+                        <option value="gasoleo">Gasóleo A</option>
+                    </select>
+                    <button id="use-location-btn" class="btn-secondary">📍 Usar mi ubicación</button>
+                    <span id="location-status" class="location-status">Ubicación no activa</span>
+                </div>
+            </div>
+
+            <div id="sort-options" class="sort-options hidden">
+                <p class="sort-label">Ordenar por:</p>
+                <div class="sort-buttons">
+                    <button class="sort-btn active" data-sort="relevance">📍 Relevancia</button>
+                    <button class="sort-btn" data-sort="gasolina95-asc">⬇️ Gasolina 95 (menor)</button>
+                    <button class="sort-btn" data-sort="gasolina95-desc">⬆️ Gasolina 95 (mayor)</button>
+                    <button class="sort-btn" data-sort="distance">📏 Distancia</button>
+                </div>
+            </div>
+
+            <div id="map" class="map hidden"></div>
+
+            <div id="results-container" class="results-container">
+                <!-- Los resultados se cargarán aquí -->
+            </div>
+
+            <div id="pagination" class="pagination hidden">
+                <button id="prev-page" class="page-btn">⬅️ Anterior</button>
+                <span id="page-info" class="page-info">Página 1</span>
+                <button id="next-page" class="page-btn">Siguiente ➡️</button>
+            </div>
+
+            <div id="loading-spinner" class="loading-spinner hidden">
+                <div class="spinner"></div>
+                <p>Buscando gasolineras...</p>
+            </div>
+
+            <div id="error-message" class="error-message hidden"></div>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 - Precios de Gasolineras España | Datos en tiempo real</p>
+        </footer>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script src="app.js?v=20240321"></script>
+</body>
+</html>
