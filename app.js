@@ -657,83 +657,161 @@ function displayStations(stations) {
 
     const selectedFuel = fuelSelect.value;
 
+    // Crear contenedor de lista
+    const listContainer = document.createElement('div');
+    listContainer.className = 'stations-list';
+
     stations.forEach(station => {
         const fuelPrice = station[selectedFuel] && station[selectedFuel] > 0 ? `${station[selectedFuel].toFixed(3)}€` : 'N/D';
         const distanceText = station.distance && station.distance > 0 ? `${station.distance.toFixed(2)} km` : 'Sin ubicación';
 
         const isFavorite = isFavoriteStation(station.id);
-        const favoriteClass = isFavorite ? 'favorito' : '';
         const favoriteSymbol = isFavorite ? '★' : '☆';
 
-        const card = document.createElement('div');
-        card.className = 'station-card';
-        card.innerHTML = `
-            <div class="station-favorite">
-                <button class="favorite-btn ${favoriteClass}" data-id="${station.id}" aria-label="Añadir a favoritos">${favoriteSymbol}</button>
+        // Crear elemento de lista compacto
+        const listItem = document.createElement('div');
+        listItem.className = 'station-list-item';
+        listItem.innerHTML = `
+            <div class="station-list-header">
+                <div class="station-list-name">⛽ ${station.name}</div>
+                <div class="station-list-price">${fuelPrice}</div>
+                <button class="favorite-btn ${isFavorite ? 'favorito' : ''}" data-id="${station.id}" aria-label="Añadir a favoritos">${favoriteSymbol}</button>
             </div>
-            <div class="station-name">⛽ ${station.name}</div>
-            <div class="station-address">📍 ${station.address}</div>
-            <div class="station-address" style="font-size: 0.85rem; color: #999;">
-                Distancia: ${distanceText}
-            </div>
-            <div class="price-group">
-                <span class="price-label">Precio ${selectedFuel.replace('gasolina', 'Gasolina ').replace('gasoleo', 'Gasóleo ').trim()}</span>
-                <span class="price-value">${fuelPrice}</span>
-            </div>
-            <div class="price-group">
-                <span class="price-label">Gasolina 95</span>
-                <span class="price-value">${station.gasolina95 > 0 ? station.gasolina95.toFixed(3) + '€' : 'N/D'}</span>
-            </div>
-            <div class="price-group">
-                <span class="price-label">Gasolina 98</span>
-                <span class="price-value">${station.gasolina98 > 0 ? station.gasolina98.toFixed(3) + '€' : 'N/D'}</span>
-            </div>
-            <div class="price-group">
-                <span class="price-label">Gasóleo</span>
-                <span class="price-value">${station.gasoleo > 0 ? station.gasoleo.toFixed(3) + '€' : 'N/D'}</span>
+            <div class="station-list-details">
+                <span class="station-list-address">📍 ${station.address}</span>
+                <span class="station-list-distance">${distanceText}</span>
             </div>
         `;
-        resultsContainer.appendChild(card);
 
-        const favoriteButton = card.querySelector('.favorite-btn');
+        // Event listener para mostrar detalles
+        listItem.addEventListener('click', (e) => {
+            // No mostrar detalles si se hizo click en el botón de favorito
+            if (e.target.classList.contains('favorite-btn')) return;
+            showStationDetail(station, selectedFuel);
+        });
+
+        // Event listener para favorito
+        const favoriteButton = listItem.querySelector('.favorite-btn');
         if (favoriteButton) {
-            favoriteButton.addEventListener('click', () => {
+            favoriteButton.addEventListener('click', (e) => {
+                e.stopPropagation(); // Evitar que se abra el detalle
                 toggleFavoriteStation(station.id);
-                renderPage();
+                renderPage(); // Recargar la lista
             });
         }
 
-        // Event listener para centrar el mapa al hacer click en la tarjeta
-        card.addEventListener('click', (e) => {
-            // No centrar si se hizo click en el botón de favorito
-            if (e.target.classList.contains('favorite-btn')) return;
-            
-            if (station.latitude && station.longitude && map) {
-                console.log('Centrando mapa en:', station.name, [station.latitude, station.longitude]);
-                map.setView([station.latitude, station.longitude], 16); // Zoom cercano
-                
-                // Opcional: abrir el popup del marker correspondiente
-                if (markersLayer) {
-                    markersLayer.eachLayer((layer) => {
-                        if (layer instanceof L.Marker) {
-                            const markerLatLng = layer.getLatLng();
-                            if (Math.abs(markerLatLng.lat - station.latitude) < 0.001 && 
-                                Math.abs(markerLatLng.lng - station.longitude) < 0.001) {
-                                layer.openPopup();
-                            }
-                        }
-                    });
-                }
-            }
-        });
-
         // Cambiar cursor para indicar que es clickeable
-        card.style.cursor = 'pointer';
-        card.title = 'Click para centrar en el mapa';
+        listItem.style.cursor = 'pointer';
+        listItem.title = 'Click para ver detalles';
+
+        listContainer.appendChild(listItem);
     });
+
+    resultsContainer.appendChild(listContainer);
 
     // Scroll suave hacia los resultados
     resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// Función para mostrar detalles completos de una gasolinera
+function showStationDetail(station, selectedFuel) {
+    // Crear modal/overlay para los detalles
+    const overlay = document.createElement('div');
+    overlay.className = 'station-detail-overlay';
+    overlay.innerHTML = `
+        <div class="station-detail-modal">
+            <div class="station-detail-header">
+                <h3>Detalles de la Gasolinera</h3>
+                <button class="close-detail-btn" aria-label="Cerrar">&times;</button>
+            </div>
+            <div class="station-detail-content">
+                <div class="station-card station-card-detail">
+                    <div class="station-favorite">
+                        <button class="favorite-btn ${isFavoriteStation(station.id) ? 'favorito' : ''}" data-id="${station.id}" aria-label="Añadir a favoritos">
+                            ${isFavoriteStation(station.id) ? '★' : '☆'}
+                        </button>
+                    </div>
+                    <div class="station-name">⛽ ${station.name}</div>
+                    <div class="station-address">📍 ${station.address}</div>
+                    <div class="station-address" style="font-size: 0.85rem; color: #999;">
+                        Distancia: ${station.distance && station.distance > 0 ? `${station.distance.toFixed(2)} km` : 'Sin ubicación'}
+                    </div>
+                    <div class="price-group">
+                        <span class="price-label">Precio ${selectedFuel.replace('gasolina', 'Gasolina ').replace('gasoleo', 'Gasóleo ').trim()}</span>
+                        <span class="price-value">${station[selectedFuel] && station[selectedFuel] > 0 ? `${station[selectedFuel].toFixed(3)}€` : 'N/D'}</span>
+                    </div>
+                    <div class="price-group">
+                        <span class="price-label">Gasolina 95</span>
+                        <span class="price-value">${station.gasolina95 > 0 ? station.gasolina95.toFixed(3) + '€' : 'N/D'}</span>
+                    </div>
+                    <div class="price-group">
+                        <span class="price-label">Gasolina 98</span>
+                        <span class="price-value">${station.gasolina98 > 0 ? station.gasolina98.toFixed(3) + '€' : 'N/D'}</span>
+                    </div>
+                    <div class="price-group">
+                        <span class="price-label">Gasóleo</span>
+                        <span class="price-value">${station.gasoleo > 0 ? station.gasoleo.toFixed(3) + '€' : 'N/D'}</span>
+                    </div>
+                    <div class="station-actions">
+                        <button class="center-map-btn" ${station.latitude && station.longitude ? '' : 'disabled'}>
+                            📍 Centrar en mapa
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Event listeners
+    const closeBtn = overlay.querySelector('.close-detail-btn');
+    const favoriteBtn = overlay.querySelector('.favorite-btn');
+    const centerMapBtn = overlay.querySelector('.center-map-btn');
+
+    // Cerrar modal
+    closeBtn.addEventListener('click', () => {
+        document.body.removeChild(overlay);
+    });
+
+    // Click fuera del modal para cerrar
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+            document.body.removeChild(overlay);
+        }
+    });
+
+    // Toggle favorito
+    favoriteBtn.addEventListener('click', () => {
+        toggleFavoriteStation(station.id);
+        const isFav = isFavoriteStation(station.id);
+        favoriteBtn.textContent = isFav ? '★' : '☆';
+        favoriteBtn.classList.toggle('favorito', isFav);
+        renderPage(); // Actualizar la lista
+    });
+
+    // Centrar mapa
+    centerMapBtn.addEventListener('click', () => {
+        if (station.latitude && station.longitude && map) {
+            console.log('Centrando mapa en:', station.name, [station.latitude, station.longitude]);
+            map.setView([station.latitude, station.longitude], 16);
+            
+            // Abrir popup correspondiente
+            if (markersLayer) {
+                markersLayer.eachLayer((layer) => {
+                    if (layer instanceof L.Marker) {
+                        const markerLatLng = layer.getLatLng();
+                        if (Math.abs(markerLatLng.lat - station.latitude) < 0.001 && 
+                            Math.abs(markerLatLng.lng - station.longitude) < 0.001) {
+                            layer.openPopup();
+                        }
+                    }
+                });
+            }
+        }
+        document.body.removeChild(overlay); // Cerrar modal después de centrar
+    });
+
+    // Agregar al body
+    document.body.appendChild(overlay);
 }
 
 function getFavoriteStations() {
