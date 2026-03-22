@@ -1,4 +1,4 @@
-# ⛽ Precios de Gasolineras España
+# ⛽ Precios de Gasolineras en España
 
 [![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-blue.svg)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 [![HTML5](https://img.shields.io/badge/HTML5-5.0-orange.svg)](https://developer.mozilla.org/en-US/docs/Web/HTML)
