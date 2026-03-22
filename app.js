@@ -20,6 +20,7 @@ const errorMessage = document.getElementById('error-message');
 const cityButtons = document.querySelectorAll('.city-btn');
 const sortOptions = document.getElementById('sort-options');
 const sortButtons = document.querySelectorAll('.sort-btn');
+const filterBanner = document.getElementById('filter-banner');
 const fuelSelect = document.getElementById('fuel-select');
 const useLocationBtn = document.getElementById('use-location-btn');
 const locationStatus = document.getElementById('location-status');
@@ -175,6 +176,7 @@ async function handleSearch() {
 
     showLoading(true);
     clearError();
+    setFilterBanner(null);
     resultsContainer.innerHTML = '';
     
     // Hide map during search (renderPage will show it if results exist)
@@ -212,6 +214,11 @@ async function handleSearch() {
         console.log('Aplicando filtro de combustible:', selectedFuel);
         currentStations = applyFuelFilter(stations, selectedFuel);
         console.log('Estaciones filtradas:', currentStations.length);
+
+        const totalStations = stations.length;
+        const filterMode = stationsResult.filterMode || 'Filtrado principal aplicado.';
+        const filterDetail = `${currentStations.length} de ${totalStations} estaciones con ${fuelSelect.options[fuelSelect.selectedIndex].text}`;
+        setFilterBanner(filterMode, filterDetail);
 
         if (currentStations.length === 0) {
             showError(`No se encontraron gasolineras con combustible ${selectedFuel} en ${city}`);
@@ -260,7 +267,11 @@ async function fetchGasStations(city) {
         const cityCached = getCityCache(normalizedCity);
         if (cityCached) {
             console.log('Usando datos del caché de ciudad:', cityCached.length, 'estaciones');
-            return { stations: cityCached, isMock: false };
+            return {
+                stations: cityCached,
+                isMock: false,
+                filterMode: 'Resultados cargados desde caché (búsqueda previa para esta ciudad).'
+            };
         }
 
         console.log('Haciendo llamada a la API:', apiUrl);
@@ -274,45 +285,63 @@ async function fetchGasStations(city) {
         const stationsRaw = data.ListaEESSPrecio || [];
         console.log('API respondió con:', stationsRaw.length, 'estaciones totales');
 
-        // Filtrar por municipio/localidad (búsqueda por ciudad)
-        console.log('Filtrando por ciudad:', normalizedCity);
+        // Filtrar por municipio/localidad/provincia (filtro principal)
+        console.log('Filtrando por ciudad/distrito:', normalizedCity);
         let filtered = stationsRaw.filter(item => {
             const municipio = (item.Municipio || '').toString().trim().toLowerCase();
             const localidad = (item.Localidad || '').toString().trim().toLowerCase();
             const provincia = (item.Provincia || '').toString().trim().toLowerCase();
-            
-            // Búsqueda más precisa: NO buscar en direcciones para evitar gasolineras en carreteras
-            // Solo buscar en municipio, localidad y provincia
-            return municipio.includes(normalizedCity) || 
-                   localidad.includes(normalizedCity) || 
+
+            // Filtro principal: provincia/municipio/localidad. Evitamos usar dirección/rótulo para reducir falsos positivos.
+            return municipio.includes(normalizedCity) ||
+                   localidad.includes(normalizedCity) ||
                    provincia.includes(normalizedCity);
         });
 
+        let filterMode = 'Filtrado por municipio/localidad/provincia.';
         console.log('Estaciones encontradas para', normalizedCity + ':', filtered.length);
-        
+
         // Debug: mostrar algunos ejemplos de lo que encontró
         if (filtered.length > 0) {
-            console.log('Ejemplos de municipios encontrados:', 
+            console.log('Ejemplos de municipios encontrados:',
                 filtered.slice(0, 3).map(item => item.Municipio || item.Localidad).join(', '));
         }
-        
+
         if (filtered.length === 0) {
             console.warn('Sin resultados exactos, intentando búsqueda más amplia...');
-            // Búsqueda alternativa: si normalizedCity es corto, buscar por provincia
-            if (normalizedCity.length > 2) {
-                const broadSearch = stationsRaw.filter(item => {
-                    const provincia = (item.Provincia || '').toString().trim().toLowerCase();
-                    return provincia.includes(normalizedCity.substring(0, 3));
-                });
-                console.log('Búsqueda amplia encontró:', broadSearch.length, 'estaciones');
-                if (broadSearch.length > 0) {
-                    filtered.push(...broadSearch.slice(0, 50));
-                }
+            filterMode = 'Búsqueda ampliada: municipio/localidad/provincia/dirección/rotulo tokenizado.';
+
+            // Búsqueda alternativa por provincia + tokenización de término de búsqueda
+            const tokens = normalizedCity.split(/\s+/).filter(t => t.length > 1);
+            const broadSearch = stationsRaw.filter(item => {
+                const municipio = (item.Municipio || '').toString().trim().toLowerCase();
+                const localidad = (item.Localidad || '').toString().trim().toLowerCase();
+                const provincia = (item.Provincia || '').toString().trim().toLowerCase();
+                const direccion = (item.Dirección || item['Dirección'] || '').toString().trim().toLowerCase();
+                const rotulo = (item.Rótulo || item['Rótulo'] || '').toString().trim().toLowerCase();
+
+                const matchToken = tokens.some(token =>
+                    municipio.includes(token) ||
+                    localidad.includes(token) ||
+                    provincia.includes(token) ||
+                    direccion.includes(token) ||
+                    rotulo.includes(token)
+                );
+
+                // Si no coincide con token, agregar con provincia parcial (ej. 'mad' para 'madrid')
+                const probProvincia = normalizedCity.length > 2 && provincia.includes(normalizedCity.substring(0, 3));
+                return matchToken || probProvincia;
+            });
+
+            console.log('Búsqueda amplia encontró:', broadSearch.length, 'estaciones');
+            if (broadSearch.length > 0) {
+                filtered = broadSearch; // Reemplazar con los resultados más amplios
             }
         }
 
-        // Mapping a esquema interno
-        const mapped = filtered.slice(0, 120).map((item, idx) => ({
+        // Mapping a esquema interno (sin límite artificial para no perder estaciones reales)
+        const mapped = filtered.map((item, idx) => ({
+
             id: idx + 1,
             name: item.Rótulo || item.Dirección || 'Gasolinera',
             city: item.Municipio || item.Localidad || city,
@@ -336,7 +365,7 @@ async function fetchGasStations(city) {
         // Guardar en caché por ciudad
         setCityCache(normalizedCity, mapped);
         
-        return { stations: mapped, isMock: false };
+        return { stations: mapped, isMock: false, filterMode };
 
     } catch (error) {
         console.error('Error en fetchGasStations:', error);
@@ -878,6 +907,18 @@ function showError(message) {
 function clearError() {
     errorMessage.classList.add('hidden');
     errorMessage.textContent = '';
+}
+
+function setFilterBanner(mode, detail) {
+    if (!filterBanner) return;
+    if (!mode) {
+        filterBanner.classList.add('hidden');
+        filterBanner.textContent = '';
+        return;
+    }
+
+    filterBanner.textContent = `${mode}${detail ? ' — ' + detail : ''}`;
+    filterBanner.classList.remove('hidden');
 }
 
 // Log de inicialización

@@ -446,6 +446,21 @@ main {
     display: none;
 }
 
+.filter-banner {
+    background: linear-gradient(90deg, #0078d7, #00b4d8);
+    color: #fff;
+    font-weight: 600;
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin: 10px 0;
+    text-align: center;
+    box-shadow: 0 1px 8px rgba(0,0,0,0.18);
+}
+
+.filter-banner.hidden {
+    display: none;
+}
+
 /* ===== ESTILOS PARA LA LISTA DE GASOLINERAS ===== */
 
 .stations-list {
